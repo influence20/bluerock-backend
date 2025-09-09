@@ -1,12 +1,13 @@
-import express from 'express';
-import { Transaction } from '../models/Transaction';
-import { auth } from '../middleware/auth';
+import express, { Request, Response } from 'express';
+import Transaction from '../models/Transaction';
+import auth from '../middleware/auth';
 import { logger } from '../utils/logger';
+import { AuthRequest } from '../types';
 
 const router = express.Router();
 
 // Get all transactions for user
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, async (req: AuthRequest, res: Response) => {
   try {
     const transactions = await Transaction.find({ userId: req.user?._id })
       .sort({ createdAt: -1 });
