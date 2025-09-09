@@ -29,8 +29,7 @@
       "@/services/*": ["services/*"],
       "@/utils/*": ["utils/*"],
       "@/types/*": ["types/*"]
-    },
-    "types": ["node", "express", "jsonwebtoken", "bcryptjs", "nodemailer", "cors", "morgan", "compression"]
+    }
   },
   "include": [
     "src/**/*"
