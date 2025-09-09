@@ -1,12 +1,13 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { Deposit } from '../models/Deposit';
-import { auth } from '../middleware/auth';
+import auth from '../middleware/auth';
 import { logger } from '../utils/logger';
+import { AuthRequest } from '../types';
 
 const router = express.Router();
 
 // Get all deposits for user
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, async (req: AuthRequest, res: Response) => {
   try {
     const deposits = await Deposit.find({ userId: req.user?._id })
       .sort({ createdAt: -1 });
@@ -25,7 +26,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Create new deposit
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, async (req: AuthRequest, res: Response) => {
   try {
     const { amount, currency, walletAddress, txid } = req.body;
     
