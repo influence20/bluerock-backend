@@ -1,12 +1,13 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { Investment } from '../models/Investment';
-import { auth } from '../middleware/auth';
+import auth from '../middleware/auth';
 import { logger } from '../utils/logger';
+import { AuthRequest } from '../types';
 
 const router = express.Router();
 
 // Get all investments for user
-router.get('/', auth, async (req, res) => {
+router.get('/', auth, async (req: AuthRequest, res: Response) => {
   try {
     const investments = await Investment.find({ userId: req.user?._id })
       .populate('depositId')
@@ -26,7 +27,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Create new investment
-router.post('/', auth, async (req, res) => {
+router.post('/', auth, async (req: AuthRequest, res: Response) => {
   try {
     const { depositId, amount } = req.body;
     
