@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { body } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
@@ -63,7 +63,7 @@ const resetPasswordValidation = [
 // @route   POST /api/auth/register
 // @desc    Register user
 // @access  Public
-router.post('/register', registerValidation, validateRequest, asyncHandler(async (req, res) => {
+router.post('/register', registerValidation, validateRequest, asyncHandler(async (req: Request, res: Response) => {
   const { firstName, lastName, email, password } = req.body;
 
   // Check if user already exists
@@ -114,7 +114,7 @@ router.post('/register', registerValidation, validateRequest, asyncHandler(async
 // @route   POST /api/auth/login
 // @desc    Login user
 // @access  Public
-router.post('/login', loginValidation, validateRequest, asyncHandler(async (req, res) => {
+router.post('/login', loginValidation, validateRequest, asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   // Find user and include password for comparison
@@ -194,7 +194,7 @@ router.post('/login', loginValidation, validateRequest, asyncHandler(async (req,
 // @route   POST /api/auth/refresh
 // @desc    Refresh access token
 // @access  Public
-router.post('/refresh', asyncHandler(async (req, res) => {
+router.post('/refresh', asyncHandler(async (req: Request, res: Response) => {
   const { refreshToken } = req.body;
 
   if (!refreshToken) {
@@ -238,7 +238,7 @@ router.post('/refresh', asyncHandler(async (req, res) => {
 // @route   POST /api/auth/logout
 // @desc    Logout user
 // @access  Private
-router.post('/logout', authenticateToken, asyncHandler(async (req: RequestWithUser, res) => {
+router.post('/logout', authenticateToken, asyncHandler(async (req: RequestWithUser, res: Response) => {
   // In a more sophisticated implementation, you would blacklist the token
   logger.info(`User logged out: ${req.user?.email}`);
 
@@ -251,7 +251,7 @@ router.post('/logout', authenticateToken, asyncHandler(async (req: RequestWithUs
 // @route   POST /api/auth/forgot-password
 // @desc    Send password reset email
 // @access  Public
-router.post('/forgot-password', forgotPasswordValidation, validateRequest, asyncHandler(async (req, res) => {
+router.post('/forgot-password', forgotPasswordValidation, validateRequest, asyncHandler(async (req: Request, res: Response) => {
   const { email } = req.body;
 
   const user = await User.findOne({ email });
@@ -282,7 +282,7 @@ router.post('/forgot-password', forgotPasswordValidation, validateRequest, async
 // @route   POST /api/auth/reset-password
 // @desc    Reset password with token
 // @access  Public
-router.post('/reset-password', resetPasswordValidation, validateRequest, asyncHandler(async (req, res) => {
+router.post('/reset-password', resetPasswordValidation, validateRequest, asyncHandler(async (req: Request, res: Response) => {
   const { token, password } = req.body;
 
   // Hash the token to compare with stored hash
@@ -326,7 +326,7 @@ router.post('/change-password', authenticateToken, [
     .isLength({ min: 8 })
     .matches(REGEX_PATTERNS.PASSWORD)
     .withMessage('New password must be at least 8 characters with uppercase, lowercase, and number'),
-], validateRequest, asyncHandler(async (req: RequestWithUser, res) => {
+], validateRequest, asyncHandler(async (req: RequestWithUser, res: Response) => {
   const { currentPassword, newPassword } = req.body;
   const user = req.user!;
 
