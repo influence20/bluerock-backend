@@ -1,1 +1,300 @@
-import { Document, Types } from 'mongoose';import { Request } from 'express';// Base Typesexport interface IUser extends Document {  _id: Types.ObjectId;  email: string;  password: string;  firstName: string;  lastName: string;  isAdmin: boolean;  isActive: boolean;  emailVerified: boolean;  emailVerificationToken?: string;  passwordResetToken?: string;  passwordResetExpires?: Date;  lastLogin?: Date;  loginAttempts: number;  lockUntil?: Date;  createdAt: Date;  updatedAt: Date;    // Methods  comparePassword(candidatePassword: string): Promise<boolean>;  generatePasswordResetToken(): string;  generateEmailVerificationToken(): string;  isLocked(): boolean;  incLoginAttempts(): Promise<void>;}export interface IDeposit extends Document {  _id: Types.ObjectId;  userId: Types.ObjectId;  amount: number;  currency: string;  walletAddress: string;  txid: string;  status: 'pending' | 'confirmed' | 'rejected';  confirmations: number;  requiredConfirmations: number;  adminNotes?: string;  confirmedAt?: Date;  rejectedAt?: Date;  createdAt: Date;  updatedAt: Date;}export interface IWithdrawal extends Document {  _id: Types.ObjectId;  userId: Types.ObjectId;  amount: number;  currency: string;  walletAddress: string;  pin?: string;  pinExpiresAt?: Date;  pinUsed: boolean;  status: 'pending' | 'pin_required' | 'approved' | 'rejected' | 'completed';  txid?: string;  adminNotes?: string;  approvedAt?: Date;  rejectedAt?: Date;  completedAt?: Date;  createdAt: Date;  updatedAt: Date;}export interface IInvestment extends Document {  _id: Types.ObjectId;  userId: Types.ObjectId;  depositId: Types.ObjectId;  amount: number;  weeklyPayout: number;  totalPayouts: number;  remainingPayouts: number;  status: 'pending' | 'active' | 'completed' | 'cancelled';  startDate?: Date;  endDate?: Date;  nextPayoutDate?: Date;  createdAt: Date;  updatedAt: Date;}export interface IPayout extends Document {  _id: Types.ObjectId;  userId: Types.ObjectId;  investmentId: Types.ObjectId;  amount: number;  week: number;  status: 'pending' | 'paid' | 'failed';  txid?: string;  currency: string;  scheduledDate: Date;  paidAt?: Date;  failedAt?: Date;  adminNotes?: string;  createdAt: Date;  updatedAt: Date;}export interface ITransaction extends Document {  _id: Types.ObjectId;  userId: Types.ObjectId;  type: 'deposit' | 'withdrawal' | 'payout' | 'investment';  amount: number;  currency?: string;  status: string;  description: string;  referenceId: Types.ObjectId;  txid?: string;  createdAt: Date;  updatedAt: Date;}export interface IAuditLog extends Document {  _id: Types.ObjectId;  userId?: Types.ObjectId;  adminId?: Types.ObjectId;  action: string;  resource: string;  resourceId: string;  changes: Record<string, any>;  ipAddress: string;  userAgent: string;  timestamp: Date;}export interface IEmailLog extends Document {  _id: Types.ObjectId;  userId?: Types.ObjectId;  to: string;  subject: string;  template: string;  status: 'pending' | 'sent' | 'failed';  error?: string;  sentAt?: Date;  createdAt: Date;}export interface IEmailTemplate extends Document {  _id: Types.ObjectId;  name: string;  subject: string;  htmlContent: string;  textContent: string;  variables: string[];  isActive: boolean;  createdAt: Date;  updatedAt: Date;}export interface ISettings extends Document {  _id: Types.ObjectId;  key: string;  value: any;  description?: string;  updatedBy: Types.ObjectId;  updatedAt: Date;}export interface INotification extends Document {  _id: Types.ObjectId;  userId: Types.ObjectId;  title: string;  message: string;  type: 'info' | 'success' | 'warning' | 'error';  isRead: boolean;  readAt?: Date;  createdAt: Date;}// Request/Response Typesexport interface AuthRequest extends Request {  user?: IUser;}export interface ApiResponse<T = any> {  success: boolean;  data?: T;  message?: string;  error?: string;  pagination?: {    page: number;    limit: number;    total: number;    totalPages: number;  };}export interface PaginationQuery {  page?: number;  limit?: number;  sort?: string;  order?: 'asc' | 'desc';  search?: string;}export interface LoginRequest {  email: string;  password: string;}export interface RegisterRequest {  firstName: string;  lastName: string;  email: string;  password: string;}export interface DepositRequest {  amount: number;  currency: string;  txid: string;}export interface WithdrawalRequest {  amount: number;  currency: string;  walletAddress: string;}export interface PinSubmissionRequest {  pin: string;}export interface ContactRequest {  name: string;  email: string;  subject: string;  message: string;}export interface PasswordChangeRequest {  currentPassword: string;  newPassword: string;}export interface PasswordResetRequest {  token: string;  password: string;}export interface EmailVerificationRequest {  token: string;}// Dashboard Typesexport interface UserDashboard {  user: IUser;  stats: {    totalBalance: number;    activeInvestments: number;    totalEarnings: number;    pendingWithdrawals: number;    nextPayoutDate?: Date;    nextPayoutAmount: number;  };  recentTransactions: ITransaction[];  activeInvestments: IInvestment[];  notifications: INotification[];}export interface AdminDashboard {  stats: {    totalUsers: number;    totalDeposits: number;    totalWithdrawals: number;    totalInvestments: number;    pendingDeposits: number;    pendingWithdrawals: number;    activeInvestments: number;    monthlyRevenue: number;  };  recentActivity: IAuditLog[];  pendingActions: {    deposits: IDeposit[];    withdrawals: IWithdrawal[];  };}// Investment Calculation Typesexport interface InvestmentCalculation {  investment: number;  weeklyPayout: number;  totalReturn: number;  profit: number;  roi: number;  schedule: PayoutSchedule[];}export interface PayoutSchedule {  week: number;  date: string;  amount: number;  status: 'pending' | 'paid' | 'failed';}// Email Typesexport interface EmailData {  to: string;  subject: string;  template: string;  variables: Record<string, any>;}export interface EmailTemplateVariables {  user?: {    firstName: string;    lastName: string;    email: string;  };  amount?: number;  currency?: string;  txid?: string;  date?: string;  pin?: string;  pinExpiry?: string;  investmentAmount?: number;  weeklyPayout?: number;  nextPayoutDate?: string;  withdrawalAmount?: number;  reason?: string;  resetLink?: string;  verificationLink?: string;  [key: string]: any;}// Crypto Typesexport interface CryptoWallet {  currency: string;  name: string;  address: string;  network: string;  minDeposit: number;  confirmations: number;}// Job Typesexport interface JobResult {  success: boolean;  message: string;  data?: any;  error?: string;}// Validation Typesexport interface ValidationError {  field: string;  message: string;  value?: any;}// File Upload Typesexport interface UploadedFile {  fieldname: string;  originalname: string;  encoding: string;  mimetype: string;  size: number;  destination: string;  filename: string;  path: string;}// Search and Filter Typesexport interface SearchFilters {  status?: string;  currency?: string;  dateFrom?: Date;  dateTo?: Date;  amountMin?: number;  amountMax?: number;  userId?: string;}// Statistics Typesexport interface TimeSeriesData {  date: string;  deposits: number;  withdrawals: number;  investments: number;  payouts: number;}export interface ChartData {  name: string;  value: number;  date?: string;}// System Health Typesexport interface SystemHealth {  status: 'healthy' | 'degraded' | 'unhealthy';  timestamp: Date;  services: {    database: 'up' | 'down';    email: 'up' | 'down';    jobs: 'up' | 'down';  };  metrics: {    uptime: number;    memoryUsage: number;    cpuUsage: number;    activeConnections: number;  };}// Backup Typesexport interface BackupInfo {  id: string;  filename: string;  size: number;  createdAt: Date;  type: 'manual' | 'automatic';  status: 'completed' | 'failed' | 'in_progress';}// Rate Limiting Typesexport interface RateLimitInfo {  limit: number;  current: number;  remaining: number;  resetTime: Date;}// Middleware Typesexport interface RequestWithUser extends Request {  user?: IUser;  rateLimit?: RateLimitInfo;}// Error Typesexport interface AppError extends Error {  statusCode: number;  isOperational: boolean;  code?: string;}// Configuration Typesexport interface AppConfig {  port: number;  nodeEnv: string;  mongoUri: string;  jwtSecret: string;  emailConfig: {    host: string;    port: number;    secure: boolean;    auth: {      user: string;      pass: string;    };  };  cryptoWallets: Record<string, string>;  investmentConfig: {    minInvestment: number;    payoutDay: number;    payoutWeeks: number;    formulaDivisor: number;    formulaMultiplier: number;  };}
+import { Document, Types } from 'mongoose';
+import { Request } from 'express';
+
+/* -------------------- Base Types -------------------- */
+export interface IUser extends Document {
+  _id: Types.ObjectId;
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  isAdmin: boolean;
+  isActive: boolean;
+  emailVerified: boolean;
+  emailVerificationToken?: string;
+  passwordResetToken?: string;
+  passwordResetExpires?: Date;
+  lastLogin?: Date;
+  loginAttempts: number;
+  lockUntil?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+
+  // Methods
+  comparePassword(candidatePassword: string): Promise<boolean>;
+  generatePasswordResetToken(): string;
+  generateEmailVerificationToken(): string;
+  isLocked(): boolean;
+  incLoginAttempts(): Promise<void>;
+}
+
+export interface IDeposit extends Document {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  amount: number;
+  currency: string;
+  walletAddress: string;
+  txid: string;
+  status: 'pending' | 'confirmed' | 'rejected';
+  confirmations: number;
+  requiredConfirmations: number;
+  adminNotes?: string;
+  confirmedAt?: Date;
+  rejectedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IWithdrawal extends Document {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  amount: number;
+  currency: string;
+  walletAddress: string;
+  pin?: string;
+  pinExpiresAt?: Date;
+  pinUsed: boolean;
+  status: 'pending' | 'pin_required' | 'approved' | 'rejected' | 'completed';
+  txid?: string;
+  adminNotes?: string;
+  approvedAt?: Date;
+  rejectedAt?: Date;
+  completedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IInvestment extends Document {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  depositId: Types.ObjectId;
+  amount: number;
+  weeklyPayout: number;
+  totalPayouts: number;
+  remainingPayouts: number;
+  status: 'pending' | 'active' | 'completed' | 'cancelled';
+  startDate?: Date;
+  endDate?: Date;
+  nextPayoutDate?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IPayout extends Document {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  investmentId: Types.ObjectId;
+  amount: number;
+  week: number;
+  status: 'pending' | 'paid' | 'failed';
+  txid?: string;
+  currency: string;
+  scheduledDate: Date;
+  paidAt?: Date;
+  failedAt?: Date;
+  adminNotes?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ITransaction extends Document {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  type: 'deposit' | 'withdrawal' | 'payout' | 'investment';
+  amount: number;
+  currency?: string;
+  status: string;
+  description: string;
+  referenceId: Types.ObjectId;
+  txid?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IAuditLog extends Document {
+  _id: Types.ObjectId;
+  userId?: Types.ObjectId;
+  adminId?: Types.ObjectId;
+  action: string;
+  resource: string;
+  resourceId: string;
+  changes: Record<string, any>;
+  ipAddress: string;
+  userAgent: string;
+  timestamp: Date;
+}
+
+export interface IEmailLog extends Document {
+  _id: Types.ObjectId;
+  userId?: Types.ObjectId;
+  to: string;
+  subject: string;
+  template: string;
+  status: 'pending' | 'sent' | 'failed';
+  error?: string;
+  sentAt?: Date;
+  createdAt: Date;
+}
+
+export interface IEmailTemplate extends Document {
+  _id: Types.ObjectId;
+  name: string;
+  subject: string;
+  htmlContent: string;
+  textContent: string;
+  variables: string[];
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ISettings extends Document {
+  _id: Types.ObjectId;
+  key: string;
+  value: any;
+  description?: string;
+  updatedBy: Types.ObjectId;
+  updatedAt: Date;
+}
+
+export interface INotification extends Document {
+  _id: Types.ObjectId;
+  userId: Types.ObjectId;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  isRead: boolean;
+  readAt?: Date;
+  createdAt: Date;
+}
+
+/* -------------------- Request/Response Types -------------------- */
+export interface AuthRequest extends Request {
+  user?: IUser;
+}
+
+export interface RequestWithUser extends Request {
+  user?: IUser;
+  rateLimit?: RateLimitInfo;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export interface PaginationQuery {
+  page?: number;
+  limit?: number;
+  sort?: string;
+  order?: 'asc' | 'desc';
+  search?: string;
+}
+
+export interface LoginRequest { email: string; password: string; }
+export interface RegisterRequest { firstName: string; lastName: string; email: string; password: string; }
+export interface DepositRequest { amount: number; currency: string; txid: string; }
+export interface WithdrawalRequest { amount: number; currency: string; walletAddress: string; }
+export interface PinSubmissionRequest { pin: string; }
+export interface ContactRequest { name: string; email: string; subject: string; message: string; }
+export interface PasswordChangeRequest { currentPassword: string; newPassword: string; }
+export interface PasswordResetRequest { token: string; password: string; }
+export interface EmailVerificationRequest { token: string; }
+
+/* -------------------- Dashboard Types -------------------- */
+export interface UserDashboard {
+  user: IUser;
+  stats: {
+    totalBalance: number;
+    activeInvestments: number;
+    totalEarnings: number;
+    pendingWithdrawals: number;
+    nextPayoutDate?: Date;
+    nextPayoutAmount: number;
+  };
+  recentTransactions: ITransaction[];
+  activeInvestments: IInvestment[];
+  notifications: INotification[];
+}
+
+export interface AdminDashboard {
+  stats: {
+    totalUsers: number;
+    totalDeposits: number;
+    totalWithdrawals: number;
+    totalInvestments: number;
+    pendingDeposits: number;
+    pendingWithdrawals: number;
+    activeInvestments: number;
+    monthlyRevenue: number;
+  };
+  recentActivity: IAuditLog[];
+  pendingActions: {
+    deposits: IDeposit[];
+    withdrawals: IWithdrawal[];
+  };
+}
+
+/* -------------------- Extra Types -------------------- */
+export interface InvestmentCalculation {
+  investment: number;
+  weeklyPayout: number;
+  totalReturn: number;
+  profit: number;
+  roi: number;
+  schedule: PayoutSchedule[];
+}
+export interface PayoutSchedule { week: number; date: string; amount: number; status: 'pending' | 'paid' | 'failed'; }
+
+export interface EmailData { to: string; subject: string; template: string; variables: Record<string, any>; }
+export interface EmailTemplateVariables {
+  user?: { firstName: string; lastName: string; email: string; };
+  amount?: number;
+  currency?: string;
+  txid?: string;
+  date?: string;
+  pin?: string;
+  pinExpiry?: string;
+  investmentAmount?: number;
+  weeklyPayout?: number;
+  nextPayoutDate?: string;
+  withdrawalAmount?: number;
+  reason?: string;
+  resetLink?: string;
+  verificationLink?: string;
+  [key: string]: any;
+}
+
+export interface CryptoWallet { currency: string; name: string; address: string; network: string; minDeposit: number; confirmations: number; }
+export interface JobResult { success: boolean; message: string; data?: any; error?: string; }
+export interface ValidationError { field: string; message: string; value?: any; }
+export interface UploadedFile { fieldname: string; originalname: string; encoding: string; mimetype: string; size: number; destination: string; filename: string; path: string; }
+export interface SearchFilters { status?: string; currency?: string; dateFrom?: Date; dateTo?: Date; amountMin?: number; amountMax?: number; userId?: string; }
+export interface TimeSeriesData { date: string; deposits: number; withdrawals: number; investments: number; payouts: number; }
+export interface ChartData { name: string; value: number; date?: string; }
+export interface SystemHealth {
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  timestamp: Date;
+  services: { database: 'up' | 'down'; email: 'up' | 'down'; jobs: 'up' | 'down'; };
+  metrics: { uptime: number; memoryUsage: number; cpuUsage: number; activeConnections: number; };
+}
+export interface BackupInfo { id: string; filename: string; size: number; createdAt: Date; type: 'manual' | 'automatic'; status: 'completed' | 'failed' | 'in_progress'; }
+export interface RateLimitInfo { limit: number; current: number; remaining: number; resetTime: Date; }
+export interface AppError extends Error { statusCode: number; isOperational: boolean; code?: string; }
+export interface AppConfig {
+  port: number;
+  nodeEnv: string;
+  mongoUri: string;
+  jwtSecret: string;
+  emailConfig: { host: string; port: number; secure: boolean; auth: { user: string; pass: string; }; };
+  cryptoWallets: Record<string, string>;
+  investmentConfig: { minInvestment: number; payoutDay: number; payoutWeeks: number; formulaDivisor: number; formulaMultiplier: number; };
+}
